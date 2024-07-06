@@ -11,7 +11,7 @@ allocate a socket and then repeatedly execute the following:
 4. go back to step (1)
 
 # Syntax:
-http_server [ port ]
+http_server [ port ]  
 port  - protocol port number to use
 
 ## Note:

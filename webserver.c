@@ -12,24 +12,6 @@
 #include "config.h"
 #include "helpers.h"
 
-/*------------------------------------------------------------------------
- * Program:   http server
- *
- * Purpose:   allocate a socket and then repeatedly execute the following:
- *              (1) wait for the next connection from a client
- *              (2) read http request, reply to http request
- *              (3) close the connection
- *              (4) go back to step (1)
- *
- * Syntax:    http_server [ port ]
- *
- *               port  - protocol port number to use
- *
- * Note:      The port argument is optional.  If no port is specified,
- *            the server uses the port specified in config.h
- *
- *------------------------------------------------------------------------
- */
 
 int main(int argc, char *argv[])
 {
@@ -48,15 +30,13 @@ int main(int argc, char *argv[])
   char *status_phrase = "";
 
   /* 1) Create a socket */
-  /* START CODE SNIPPET 1 */
   listen_socket = socket(AF_INET, SOCK_STREAM, 0);
   
   if (listen_socket == -1){
       fprintf(stderr, "FAILED TO CREATE SOCKET!!!\n");
       exit(EXIT_FAILURE);
   }
-  /* END CODE SNIPPET 1 */
-
+  
   /* Check command-line argument for port and extract
    * port number if one is specified. Otherwise, use default
    */
@@ -81,30 +61,24 @@ int main(int argc, char *argv[])
   memset(&server_address, 0, sizeof(server_address));
 
   /* 2) Set the values for the server address structure */
-  /* START CODE SNIPPET 2 */
   server_address.sin_family = AF_INET;
   server_address.sin_addr.s_addr = htonl(INADDR_ANY);
   server_address.sin_port = htons(port);
-  /* END CODE SNIPPET 2 */
 
   /* 3) Bind the socket to the address information set in server_address */
-  /* START CODE SNIPPET 3 */
   if( bind(listen_socket, (struct sockadddr *)&server_address , sizeof(server_address)) < 0)
   {
     fprintf(stderr, "SERVER BIND FAILED!!!");
     exit(EXIT_FAILURE);
   }
   puts("Bind Success...");
-  /* END CODE SNIPPET 3 */
 
   /* 4) Start listening for connections */
-  /* START CODE SNIPPET 4 */
   if (listen(listen_socket, 3) < 0) {
     fprintf(stderr, "SERVER LISTENING FAILED!!!");
     exit(EXIT_FAILURE);
   }
   puts("Listening...");
-  /* END CODE SNIPPET 4 */
 
   /* Main server loop
    * Loop while the listen_socket is valid
@@ -112,7 +86,6 @@ int main(int argc, char *argv[])
   while (listen_socket >= 0)
   {
     /* 5) Accept a connection */
-    /* START CODE SNIPPET 5 */
     puts("Waiting for incoming connections...");
     int addrlen = sizeof(client_address);
     connection_socket = accept(listen_socket, (struct sockaddr *)&client_address, (socklen_t *)&addrlen);
@@ -122,7 +95,6 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
     puts("Connection socket created");
-    /* END CODE SNIPPET 5 */
 
     /* Fork a child process to handle this request */
     if ((pid = fork()) == 0)
@@ -145,7 +117,6 @@ int main(int argc, char *argv[])
        * this will fill in the struct new_request for you
        * see helper.h and httpreq.h                      
        */
-      /* START CODE SNIPPET 6 */
       if (Parse_HTTP_Request(connection_socket, &new_request)) {
         printf("Parsed HTTP request successfully.\n");
         printf("Method: %s\n", new_request.method);
@@ -153,10 +124,8 @@ int main(int argc, char *argv[])
       } else {
           printf("Failed to parse HTTP request.\n");
       }
-      /* END CODE SNIPPET 6 */
 
       /* 7) Decide which status_code and reason phrase to return to client */
-      /* START CODE SNIPPET 7 */
       // Example: Assume the server can handle GET requests for a specific resource
 
       if(strcmp(new_request.method, "GET") == 0 || strcmp(new_request.method, "HEAD") == 0){
@@ -184,9 +153,7 @@ int main(int argc, char *argv[])
        * Copy the following line and fill in the ??
        * sprintf(response_buffer, "HTTP/1.0 %d %s\r\n", ??, ??);
        */
-      /* START CODE SNIPPET 8 */
       sprintf(response_buffer, "HTTP/1.0 %d %s\r\n", status_code, status_phrase);
-      /* END CODE SNIPPET 8 */
 
       printf("Sending response line: %s\n", response_buffer);
 
@@ -194,21 +161,17 @@ int main(int argc, char *argv[])
        * Copy the following line and fill in the ??
        * send(??, response_buffer, strlen(response_buffer), 0);
        */
-      /* START CODE SNIPPET 9 */
       if (strcmp(new_request.method, "HEAD") != 0) {
           send(connection_socket, response_buffer, strlen(response_buffer), 0);
       }
-      /* END CODE SNIPPET 9 */
 
       bool is_ok_to_send_resource = false;
       /* 10) Send resource (if requested) under what condition will the
        * server send an entity body?
        */
-      /* START CODE SNIPPET 10 */
       if(strcmp(new_request.method, "GET") == 0 && Is_Valid_Resource(new_request.URI)){
         is_ok_to_send_resource = true;
       }
-      /* END CODE SNIPPET 10 */
 
       if (is_ok_to_send_resource)
       {
@@ -221,9 +184,7 @@ int main(int argc, char *argv[])
          * Copy the following line and fill in the ??
          * send(??, "\r\n\r\n", strlen("\r\n\r\n"), 0);
          */
-        /* START CODE SNIPPET 11 */
         send(connection_socket, "\r\n\r\n", strlen("\r\n\r\n"), 0);
-        /* END CODE SNIPPET 11 */
       } 
 
       /* Child's work is done
